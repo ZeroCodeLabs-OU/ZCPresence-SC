@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../src/MyERC20Token.sol"; // Ensure the path to your contract is correct
+import "../src/MyERC20Token.sol"; 
 
 contract MyERC20TokenTest is Test {
     MyERC20Token tokenWithLimitedSupply;
