@@ -71,7 +71,7 @@ contract MyERC20TokenTest is Test {
         tokenWithLimitedSupply.transfer(user1, 10);
         
         tokenWithLimitedSupply.unpause();
-        tokenWithLimitedSupply.mint(deployer, 10); // Assuming deployer has MINTER_ROLE
+        tokenWithLimitedSupply.mint(deployer, 10); 
         tokenWithLimitedSupply.transfer(user1, 10); // Should succeed after unpausing
     }
 

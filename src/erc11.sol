@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-
 import "./ERC1155.sol";
 import "./Address.sol";
 import "./Strings.sol";
@@ -13,6 +12,8 @@ import "./ECDSA.sol";
 import "./ERC2771Recipient.sol";
 import "./ReentrancyGuard.sol";
 
+import "./IERC20.sol";
+import "../lib/chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 contract MyToken is
     ERC1155,
     ERC2981,
@@ -28,6 +29,14 @@ contract MyToken is
 
     mapping(bytes32 => bool) public signatureUsed;
     mapping(address => uint256) nonces;
+    struct TokenInfo {
+        IERC20 payToken;
+        uint256 staticCost;  // Static cost in token units for minting.
+        bool useOracle;  // Indicates if Chainlink oracle is used for dynamic pricing.
+        address priceFeedAddress;  // Chainlink Price Feed contract address.
+    }
+
+    TokenInfo[] public allowedTokens;
 
     /// Fixed at deployment time
     struct DeploymentConfig {
@@ -180,6 +189,33 @@ contract MyToken is
         return ERC2771Recipient._msgData();
     }
 
+    function addToken(
+        IERC20 _payToken,
+        uint256 _staticCost,
+        bool _useOracle,
+        address _priceFeedAddress
+    ) public onlyOwner {
+        allowedTokens.push(TokenInfo({
+            payToken: _payToken,
+            staticCost: _staticCost,
+            useOracle: _useOracle,
+            priceFeedAddress: _priceFeedAddress
+        }));
+    }
+
+    function updateToken(
+        uint256 _tokenId,
+        uint256 _newCost,
+        bool _useOracle,
+        address _newPriceFeedAddress
+    ) public onlyOwner {
+        TokenInfo storage token = allowedTokens[_tokenId];
+        token.staticCost = _newCost;
+        token.useOracle = _useOracle;
+        token.priceFeedAddress = _newPriceFeedAddress;
+    }
+
+
     /**
      *
      * User actions *
@@ -234,6 +270,26 @@ contract MyToken is
             _mintTokens(_msgSender(), id, amount, data);
         }
         _deploymentConfig.treasuryAddress.sendValue(msg.value);
+    }
+    function mintWithERC20(uint256 _tokenId, uint256 _amount, uint256 _pid, bytes memory data) public payable {
+        TokenInfo memory tokenInfo = allowedTokens[_pid];
+        uint256 totalCost;
+
+        if (tokenInfo.useOracle) {
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(tokenInfo.priceFeedAddress);
+            (, int256 latestPrice, , , ) = priceFeed.latestRoundData();
+            require(latestPrice > 0, "Invalid price data");
+            uint256 decimals = priceFeed.decimals();
+            totalCost = (tokenInfo.staticCost * 10 ** decimals) / uint256(latestPrice);
+        } else {
+            totalCost = tokenInfo.staticCost;
+        }
+
+        totalCost *= _amount;  // Total cost based on the number of tokens to mint.
+
+        require(tokenInfo.payToken.transferFrom(msg.sender, address(this), totalCost), "Payment failed");
+
+        _mint(msg.sender, _tokenId, _amount, data);
     }
 
     /// Mint tokens if the wallet has been whitelisted
