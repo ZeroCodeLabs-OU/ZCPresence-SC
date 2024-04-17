@@ -1,23 +1,17 @@
 
-# Solidity Smart Contract Repository
-
-This repository contains Solidity smart contracts for a token system using ERC20, ERC721, and ERC1155 standards, along with comprehensive tests using Foundry.
+# Solidity Smart Contract Examples
 
 ## Installation
 
-To get started with this repository, you will need to install Foundry, a fast, portable, and modular toolkit for Ethereum application development written in Rust.
+This repository uses [Foundry](https://book.getfoundry.sh/) for smart contract development. Foundry is a fast, portable, and modular toolkit for Ethereum application development.
 
-### Installing Foundry
+### Prerequisites
 
-You can install Foundry on macOS, Linux, or Windows by running the following command in your terminal:
-
-```bash
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-```
-
-This command installs `forge`, Foundry's command-line tool for compiling and testing Solidity contracts.
-
+- Install Foundry:
+  ```sh
+  curl -L https://foundry.paradigm.xyz | bash
+  foundryup
+  ```
 
 - Install Chainlink and OpenZeppelin dependencies:
   ```sh
@@ -35,45 +29,39 @@ forge install
 
 ## Testing
 
-The repository includes tests for ERC20, ERC721, and ERC1155 tokens, ensuring compliance with token standards and expected behaviors such as minting, pausing, and access control.
+This repository includes several test scripts for testing the functionality of ERC20 and ERC1155 tokens using Foundry.
 
 ### Test Scripts
 
-1. **MyERC20TokenTest.sol** - Tests the functionality of the `MyERC20Token` contract. It covers scenarios with both limited and unlimited token supplies, including minting, pausing, burning, and role management.
-
-2. **MyERC20TokenAndERC11Test.sol** - Integrates testing of an ERC1155 token contract (`MyToken`) using ERC20 tokens for minting. This script tests the minting process using ERC20 tokens, ensuring that the contract handles token transfers and access control correctly.
-
-3. **NFTMintWithERC20Test.sol** - Tests minting ERC721 tokens (`NFTCollection`) using ERC20 tokens (`MyERC20Token`). It verifies the interaction between ERC721 and ERC20 through minting processes and role-based access control.
+- `MyERC20Token.t.sol`: Tests various functionalities of the ERC20 token including minting, transfer, and permission handling.
+- `MyERC20TokenAndERC11.t.sol`: Demonstrates minting ERC1155 NFTs using ERC20 tokens as payment.
+- `MyERC20TokenAndNFTCollectionTest.t.sol`: Demonstrates minting ERC721 NFTs using ERC20 tokens as payment.
 
 ### Running Tests
 
-To run all tests, navigate to the root directory of the repository and execute:
+To run all tests:
 
-```bash
+```sh
 forge test
 ```
 
-To run a specific test file, use the following command:
+To run individual test files:
 
-```bash
-forge test --match-path path/to/testfile.sol
-```
+- For ERC20 token tests:
+  ```sh
+  forge test --match-path test/MyERC20Token.t.sol
+  ```
 
-For example, to run tests specifically for the ERC20 token scenarios:
+- For ERC1155 token tests:
+  ```sh
+  forge test --match-path test/MyERC20TokenAndERC11.t.sol
+  ```
 
-```bash
-forge test --match-path test/MyERC20TokenTest.sol
-```
+- For NFT minting with ERC20 tests:
+  ```sh
+  forge test --match-path test/MyERC20TokenAndNFTCollectionTest.t.sol
+  ```
 
-And for ERC721 minting tests:
+## Additional Information
 
-```bash
-forge test --match-path test/NFTMintWithERC20Test.sol
-```
-
-## Test Details
-
-- **ERC20 Token Tests**: Verify functionalities such as minting, cap enforcement, role management, pausing, and compliance with the ERC20 standard.
-- **ERC1155 Token Tests**: Focus on minting using ERC20 tokens, access control, and interaction with ERC1155 token standards.
-- **ERC721 Token Tests**: Test the minting of NFTs using ERC20 tokens, ensuring correct functionality of the minting process, access control, and ERC721 compliance.
-
+Each test file contains multiple scenarios to ensure the smart contracts behave as expected across different use cases. Look into the test files for detailed descriptions of each test case.

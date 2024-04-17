@@ -7,7 +7,7 @@ import "../src/MyERC20Token.sol";
 import "../src/NFTCollection.sol";
 import "../src/IERC20.sol";
 
-contract NFTMintWithERC20Test is Test {
+contract MyERC20TokenAndNFTCollectionTest is Test {
     MyERC20Token erc20Token;
     NFTCollection nftCollection;
     address testUser = address(1);
