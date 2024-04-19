@@ -1,5 +1,5 @@
 
-# Presence SocialFi (PRS Token) Smart-Contracts by Zero-Code
+# Presence SocialFi Protocol Smart-Contracts by Zero-Code
 
 ## Overview
 The Presence SocialFi Protocol (PRS) aims to revolutionize local consumer interactions and engagements by leveraging blockchain technology. This repository is part of a broader [Zero-Code](https://zero-code.io) initiative to build the Presence SocialFi protocol on the [Polygon network](https://polygon.technology/) and to integrate it to [Presence Application](https://presence.bio/). Our goal is to address the shortcomings of current social platforms by fostering genuine foot traffic and personal connections. By combining social discovery mechanisms with a merchant-focused economy, Presence empowers users to locate industry peers and explore local venues like coworking spaces thereby directly supporting local businesses and service providers.
