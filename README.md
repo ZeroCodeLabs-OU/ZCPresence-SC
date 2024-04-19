@@ -1,5 +1,25 @@
 
-# Solidity Smart Contract Examples
+# Presence SocialFi (PRS Token) Smart-Contracts by Zero-Code
+
+## Introduction
+Why we created this repository? Context of building Presence SocialFi protocol using Polygon network in an opensource matter
+What does this repository contain? Smart-contracts that are used in the Presence SocialFi protocol (list it, and describe what is it used for)
+- ERC1155: will be used to create vouchers and giftcards for Local consumers
+- ERC20: will be used by the protocol to reward engaged users and collect fees on offer creation and redeeming as well as cashing out rewards) 
+- ERC11: Burning mechanism for onchain redeeming of ERC1155 tokens
+- Biconomy AA (Trench 3): Enables and Disable Gasless creation of the ERC1155 smart-contract
+- Biconomy Gasless API: Enable and Disable Gasless minting, airdroping & redeeming of the ERC1155 tokens
+- ERC11/Chainlink: Choosing the currency to mint token (USDT, MATIC, PRS ERC20)
+- TokenDistribution/Chainlink: Choosing the currency to buy token (USDT, MATIC, PRS ERC20)
+- Biconomy OnRamp Service Partner (Trench 3): OnRamp Buying of USDT, MATIC with FIAT
+- TokenDistribution: Buy PresenceCoin ERC20 with USDT or MATIC
+- ERC11: Set royalties on second market sales of ERC 1155 Tokens
+- Royalty Splitter: Split the royalties between multiple parties on second market sales of ERC 1155 Tokens
+- ERC11: Lock & Unlock Second market trade (Soulbound Token)
+- ERC11: Enables whitelisting & presales
+- ERC11: Enables updating token’s IPFS
+- ProtocolDestribution (Trench 3): Enable and Disable collection Protocol fees in the treasuring address
+- Multisig: Enables the Decentralisation of the protocol governance
 
 ## Installation
 
