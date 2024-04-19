@@ -27,11 +27,11 @@ Purpose: Serves as the backbone for the protocol's economy, used to reward engag
 - **OnRamp Service Partner (Trench 3):** Facilitates the direct purchase of USDT and MATIC with fiat currencies, integrating traditional financial systems with blockchain technology.
 ### Token Distribution Mechanisms
 - **TokenDistribution (Chainlink Integration):** Allows users to select the currency for buying tokens (USDT, MATIC, PRS ERC20) and supports purchasing PresenceCoin ERC20 using these currencies.
-## Multisig Contracts
+### Multisig Contracts
 - **Purpose:** Enables decentralized protocol governance, allowing multiple parties to manage and approve significant actions within the protocol, ensuring security and distributed control.
-## Royalty Splitter Contracts
+### Royalty Splitter Contracts
 - **Purpose:** Automates the distribution of royalties among multiple parties from second market sales, ensuring fairness and transparency in profit-sharing.
-## Protocol Distribution (Trench 3)
+### Protocol Distribution (Trench 3)
 - **Purpose:** Manages the collection of protocol fees, depositing them into a treasury address, which supports the sustainability and financial operations of the protocol.
 
 ## Installation
