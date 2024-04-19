@@ -1,25 +1,38 @@
 
 # Presence SocialFi (PRS Token) Smart-Contracts by Zero-Code
 
-## Introduction
-Why we created this repository? Context of building Presence SocialFi protocol using Polygon network in an opensource matter
-What does this repository contain? Smart-contracts that are used in the Presence SocialFi protocol (list it, and describe what is it used for)
-- ERC1155: will be used to create vouchers and giftcards for Local consumers
-- ERC20: will be used by the protocol to reward engaged users and collect fees on offer creation and redeeming as well as cashing out rewards) 
-- ERC11: Burning mechanism for onchain redeeming of ERC1155 tokens
-- Biconomy AA (Trench 3): Enables and Disable Gasless creation of the ERC1155 smart-contract
-- Biconomy Gasless API: Enable and Disable Gasless minting, airdroping & redeeming of the ERC1155 tokens
-- ERC11/Chainlink: Choosing the currency to mint token (USDT, MATIC, PRS ERC20)
-- TokenDistribution/Chainlink: Choosing the currency to buy token (USDT, MATIC, PRS ERC20)
-- Biconomy OnRamp Service Partner (Trench 3): OnRamp Buying of USDT, MATIC with FIAT
-- TokenDistribution: Buy PresenceCoin ERC20 with USDT or MATIC
-- ERC11: Set royalties on second market sales of ERC 1155 Tokens
-- Royalty Splitter: Split the royalties between multiple parties on second market sales of ERC 1155 Tokens
-- ERC11: Lock & Unlock Second market trade (Soulbound Token)
-- ERC11: Enables whitelisting & presales
-- ERC11: Enables updating token’s IPFS
-- ProtocolDestribution (Trench 3): Enable and Disable collection Protocol fees in the treasuring address
-- Multisig: Enables the Decentralisation of the protocol governance
+## Overview
+The Presence SocialFi Protocol (PRS) aims to revolutionize local consumer interactions and engagements by leveraging blockchain technology. This repository is part of a broader Zero-Code initiative to build the Presence SocialFi protocol on the Polygon network. Our goal is to address the shortcomings of current social platforms by fostering genuine foot traffic and personal connections. By combining social discovery mechanisms with a merchant-focused economy, Presence empowers users to locate industry peers and explore local venues like coworking spaces thereby directly supporting local businesses and service providers.
+
+This repository is central to building the Presence SocialFi protocol on the Polygon network, particularly in advancing our blockchain-based merchant loyalty programs. Our open-source approach reflects a commitment to transparency and community-driven development, allowing global contributors to participate in shaping a decentralized application that serves digital nomads, expats, and local merchants ranging from coffee shops, entertainments and dinnings, to personal trainers or yoga instructors.
+
+
+## Purpose of the Repository
+This repository has been created to house the essential building blocks of the Presence SocialFi protocol. It contains various smart contracts designed to operate within the Polygon network, facilitating a range of functionalities from economic transactions to governance mechanisms. The decision to make this repository open-source stems from our commitment to community involvement and the ethos of decentralization, allowing developers and stakeholders worldwide to contribute to and scrutinize the protocol's development.
+
+## Contents of the Repository
+Below is an overview of the smart contracts included in this repository, along with their specific functions within the Presence SocialFi protocol:
+
+### ERC1155 Smart Contracts
+Purpose: Utilized for creating vouchers and gift cards for local consumers, enhancing the engagement and rewards mechanisms for protocol participants.
+### ERC20 Smart Contracts
+Purpose: Serves as the backbone for the protocol's economy, used to reward engaged users, collect fees related to offer creation and redemption, and manage the cashing out of rewards.
+### ERC11 Smart Contracts
+- **Burning Mechanism:** Allows for the on-chain redeeming of ERC1155 tokens by burning them, facilitating a robust transaction lifecycle.
+- **Currency Selection & Minting (Chainlink Integration):** Facilitates choosing the currency for minting tokens (USDT, MATIC, PRS ERC20).
+- **Royalties & Market Controls:** Manages royalties on second market sales and controls trading mechanisms like locking, unlocking, and setting up Soulbound Tokens. It also supports updating token metadata stored on IPFS.
+### Biconomy Integrations
+- **AA (Trench 3):** Enables and disables gasless creation of the ERC1155 smart contract, reducing the barrier for entry regarding transaction costs.
+- **Gasless API:** Supports gasless minting, airdropping, and redeeming of ERC1155 tokens, enhancing user experience and accessibility.
+- **OnRamp Service Partner (Trench 3):** Facilitates the direct purchase of USDT and MATIC with fiat currencies, integrating traditional financial systems with blockchain technology.
+### Token Distribution Mechanisms
+- **TokenDistribution (Chainlink Integration):** Allows users to select the currency for buying tokens (USDT, MATIC, PRS ERC20) and supports purchasing PresenceCoin ERC20 using these currencies.
+## Multisig Contracts
+- **Purpose:** Enables decentralized protocol governance, allowing multiple parties to manage and approve significant actions within the protocol, ensuring security and distributed control.
+## Royalty Splitter Contracts
+- **Purpose:** Automates the distribution of royalties among multiple parties from second market sales, ensuring fairness and transparency in profit-sharing.
+## Protocol Distribution (Trench 3)
+- **Purpose:** Manages the collection of protocol fees, depositing them into a treasury address, which supports the sustainability and financial operations of the protocol.
 
 ## Installation
 
