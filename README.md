@@ -68,7 +68,6 @@ This repository includes several test scripts for testing the functionality of E
 
 - `MyERC20Token.t.sol`: Tests various functionalities of the ERC20 token including minting, transfer, and permission handling.
 - `MyERC20TokenAndERC11.t.sol`: Demonstrates minting ERC1155 NFTs using ERC20 tokens as payment.
-- `MyERC20TokenAndNFTCollectionTest.t.sol`: Demonstrates minting ERC721 NFTs using ERC20 tokens as payment.
 
 ### Running Tests
 
@@ -90,10 +89,7 @@ To run individual test files:
   forge test --match-path test/MyERC20TokenAndERC11.t.sol
   ```
 
-- For NFT minting with ERC20 tests:
-  ```sh
-  forge test --match-path test/MyERC20TokenAndNFTCollectionTest.t.sol
-  ```
+
 
 ## Additional Information
 
