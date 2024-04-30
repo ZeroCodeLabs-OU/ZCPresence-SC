@@ -34,9 +34,9 @@ Purpose: Serves as the backbone for the protocol's economy, used to reward engag
 ### Protocol Distribution (Trench 3)
 - **Purpose:** Manages the collection of protocol fees, depositing them into a treasury address, which supports the sustainability and financial operations of the protocol.
 
-### PRS Mining Pool
+### PRS Mining Pool (Trench 3)
 - **Purpose:** This smart contract is dedicated to managing the operations of the mining pool. It directly handles the distribution of PRS tokens as rewards for participants. The contract is responsible for staking mechanisms and the reward logic, which allocates PRS tokens to miners based on their contributions. It is explicitly designed to interact with the PRS token contract to facilitate the transfer of tokens to reward mining efforts.
-### DAO Governance
+### DAO Governance (Trench 3)
 - **Purpose:** This is a governance contract or a series of contracts that form the DAO's governance framework. It manages voting mechanisms, proposal submissions, and the execution of community-approved decisions. The DAO contract utilizes the PRS token contract for token-based voting functionalities, ensuring that token holders can exercise their voting rights. Additionally, it interfaces with the treasury contract to implement financial decisions that have been approved through the governance process.
 ### Treasury Contract
 - **Purpose:** The treasury contract oversees the financial operations of the protocol. It is responsible for the accumulation of fees, distribution of rewards, and the overall management of the protocol's funds in line with the governance decisions. The treasury actively manages the inflow of PRS tokens from transaction fees and oversees their distribution, whether for reinvestment in the protocol or as payouts to stakeholders.
