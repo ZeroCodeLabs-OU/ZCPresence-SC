@@ -2,21 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/erc11.sol"; // Ensure this path correctly points to your MyToken.sol ERC1155 contract
+import "../src/erc11.sol"; 
 
 contract DeployMyTokenScript is Script {
     function run() external {
         vm.startBroadcast();
 
-        // The deployer address can be an environment variable or hardcoded for specific cases
         address initialOwner = vm.envAddress("DEPLOYER_ADDRESS");
 
-        // Deploy the ERC1155 contract
         console.log("Deploying MyToken (ERC1155) contract...");
         MyToken erc1155Token = new MyToken();
 
-        uint256 numTokenTypes = 3;  // Example of 3 different token types
-        uint256 maxSupply = 1000;   // Total max supply for all token types
+        uint256 numTokenTypes = 3;  
+        uint256 maxSupply = 1000;   
 
         // Define token quantities, assuming each type has an equal share of the maxSupply
         uint256[] memory tokenQuantities = new uint256[](maxSupply);
@@ -28,8 +26,8 @@ contract DeployMyTokenScript is Script {
         uint256[] memory reservedTokenIds = new uint256[](numTokenTypes);
         uint256[] memory reservedAmounts = new uint256[](numTokenTypes);
         for (uint256 i = 0; i < numTokenTypes; i++) {
-            reservedTokenIds[i] = i + 1;  // Assuming token IDs are 1-based
-            reservedAmounts[i] = 1;       // Reserve 1 unit for each token type
+            reservedTokenIds[i] = i + 1;  
+            reservedAmounts[i] = 1;       
         }
 
         // Initial configuration setup for your ERC1155 token

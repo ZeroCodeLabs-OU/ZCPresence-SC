@@ -2,12 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
-import "../src/MyERC20Token.sol"; // Update the path according to your project structure
+import "../src/MyERC20Token.sol"; 
 
 contract DeployMyERC20Token is Script {
-    // Deploy the contract and return its address for potential use in tests or verification
     function run() external returns (address) {
-        // Hardcoded deployment parameters
         string memory name = "ExampleToken";
         string memory symbol = "EXT";
         address defaultAdmin = vm.addr(1); // Using vm.addr to simulate an address for Anvil

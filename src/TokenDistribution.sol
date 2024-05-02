@@ -11,7 +11,7 @@ contract TokenDistribution is Ownable {
     IERC20 public usdt;
     AggregatorV3Interface public priceFeed;
 
-    uint256 public tokenPriceUSD;  // Price per token in USD with 18 decimals
+    uint256 public tokenPriceUSD;  
 
     // Events
     event TokensPurchased(address indexed buyer, uint256 usdtSpent, uint256 tokensBought);
@@ -30,7 +30,7 @@ contract TokenDistribution is Ownable {
         token = IERC20(_token);
         usdt = IERC20(_usdt);
         priceFeed = AggregatorV3Interface(_priceFeed);
-        tokenPriceUSD = 1 * 10**18; // Default price $1 per token
+        tokenPriceUSD = 1 * 10**18; 
     }
 
     function depositTokens(uint256 amount) public onlyOwner {
@@ -49,14 +49,11 @@ contract TokenDistribution is Ownable {
         (, int256 price, , , ) = priceFeed.latestRoundData();
         require(price > 0, "Invalid price data");
 
-        // Log the price data from the oracle
         emit OraclePriceData(price);
 
-        // Adjust Chainlink price to a full USD unit per USDT (e.g., $1 per USDT as 1e8 if price feed is in 1e8 format)
         uint256 usdAmount = (usdtAmount * uint256(price)) / 1e8;
         uint256 tokensToBuy = usdAmount * 10**12; 
 
-        // uint256 tokensToBuy = usdtAmountAdjusted / tokenPriceUSD;
 
         require(usdt.transferFrom(msg.sender, address(this), usdtAmount), "USDT transfer failed");
         require(token.transfer(msg.sender, tokensToBuy), "Token transfer failed");
