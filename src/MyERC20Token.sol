@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./ERC20.sol";
 import "./ERC20Burnable.sol";
@@ -31,6 +31,8 @@ contract MyERC20Token  is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, ER
     {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(PAUSER_ROLE, pauser);
+
+        
         _grantRole(MINTER_ROLE, minter);
         _grantRole(AIRDROPPER_ROLE, airdropper);
         _cap = capacity;
