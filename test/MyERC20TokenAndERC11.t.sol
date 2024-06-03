@@ -88,7 +88,10 @@ contract MyERC20TokenAndERC11 is Test ,ERC1155Holder {
                 tokenIds: reservedTokenIds,
                 amounts: reservedAmounts
             })
+
         );
+        console.log("maxSupply",maxSupply);
+        // console.log("tokenQuantities",tokenQuantities);
         console.log("MyToken (ERC1155) initialized successfully.");
 
         vm.prank(defaultAdmin);

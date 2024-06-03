@@ -7,7 +7,7 @@ import "../src/TokenDistribution.sol";
 contract DeployTokenDistribution is Script {
     function run() external { 
         // Configuration
-        address tokenAddress = 0xf93A0FCdE9304CABefb004540838FF5234789429;  
+        address tokenAddress = 0x8db9B7C4e93e6e1F5cC1754D6a89e0D5ad276af9;  
         address usdtAddress = 0xc2132D05D31c914a87C6611C10748AEb04B58e8F; 
         address priceFeedAddress = 0x0A6513e40db6EB1b165753AD52E80663aeA50545;  
         address initialOwner = vm.envAddress("DEPLOYER_ADDRESS");  
