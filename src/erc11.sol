@@ -15,6 +15,11 @@ import "./IERC20.sol";
 import "./IFeeDistribution.sol";
 import "../lib/chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
+interface IMiningPool {
+    function recordMintTx() external;
+    function recordRevokeTx() external;
+}
+
 contract MyToken is
     ERC1155,
     ERC2981,
@@ -31,7 +36,9 @@ contract MyToken is
 
     mapping(bytes32 => bool) public signatureUsed;
     mapping(address => uint256) nonces;
-
+    event TokensDeposited(uint256 amount);
+    event TokenPriceUpdated(uint256 newPrice);
+    event USDTWithdrawn(uint256 amount);
     struct TokenInfo {
         IERC20 payToken;
         uint256 staticCost;  // Static cost in token units for minting.
@@ -59,6 +66,10 @@ contract MyToken is
         address priceFeedAddress;
         address feeDistributionAddress;
         uint256 feePercentage; // Fee percentage in basis points (100 bps = 1%)
+        uint256 minimumMintPrice; // Minimum price for minting
+        address miningPool; // Address of the mining pool contract
+        uint256 burnPrice; // Price required for burning if the mint price is below the minimum
+
     }
 
     struct RuntimeConfig {
@@ -137,6 +148,7 @@ contract MyToken is
         _preventInitialization = true;
     }
 
+
     function _msgSender()
         internal
         view
@@ -153,6 +165,15 @@ contract MyToken is
         returns (bytes calldata)
     {
         return ERC2771Recipient._msgData();
+    }
+    function addUSDT(uint256 amount) public onlyOwner {
+        require(_deploymentConfig.payToken.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
+        emit TokensDeposited(amount);
+    }
+
+    function withdrawUSDT(uint256 amount) public onlyOwner {
+        require(_deploymentConfig.payToken.transfer(msg.sender, amount), "Withdrawal failed");
+        emit USDTWithdrawn(amount);
     }
 
     function addToken(
@@ -199,25 +220,34 @@ contract MyToken is
 
         TokenInfo memory tokenInfo = allowedTokens[tokenIndex];
         uint256 totalCost = tokenInfo.staticCost * amount;
-        uint256 fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
-        uint256 remainingAmount = totalCost - fee;
+        uint256 fee = 0;
 
-        require(
-            tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.feeDistributionAddress, fee),
-            "ERC20 fee transfer failed"
-        );
+        if (totalCost >= _deploymentConfig.minimumMintPrice) {
+            fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
+            uint256 remainingAmount = totalCost - fee;
 
-        require(
-            tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, remainingAmount),
-            "ERC20 payment transfer failed"
-        );
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.feeDistributionAddress, fee),
+                "ERC20 fee transfer failed"
+            );
 
-        IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, remainingAmount),
+                "ERC20 payment transfer failed"
+            );
+
+            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+        } else {
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, totalCost),
+                "ERC20 payment transfer failed"
+            );
+        }
 
         userTokensNFTPublicSale[_msgSender()] += amount;
 
-        if (isTokenExist[id] == true) {
-            if (_deploymentConfig.openedition == true) {
+        if (isTokenExist[id]) {
+            if (_deploymentConfig.openedition) {
                 _mintTokens(_msgSender(), id, amount, data);
             } else {
                 require(
@@ -241,6 +271,8 @@ contract MyToken is
 
             _mintTokens(_msgSender(), id, amount, data);
         }
+
+        IMiningPool(_deploymentConfig.miningPool).recordMintTx();
     }
 
     function presaleMint(
@@ -291,27 +323,36 @@ contract MyToken is
 
         TokenInfo memory tokenInfo = allowedTokens[tokenIndex];
         uint256 totalCost = tokenInfo.staticCost * amount;
-        uint256 fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
-        uint256 remainingAmount = totalCost - fee;
+        uint256 fee = 0;
 
-        require(
-            tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.feeDistributionAddress, fee),
-            "ERC20 fee transfer failed"
-        );
+        if (totalCost >= _deploymentConfig.minimumMintPrice) {
+            fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
+            uint256 remainingAmount = totalCost - fee;
 
-        require(
-            tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, remainingAmount),
-            "ERC20 payment transfer failed"
-        );
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.feeDistributionAddress, fee),
+                "ERC20 fee transfer failed"
+            );
 
-        IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, remainingAmount),
+                "ERC20 payment transfer failed"
+            );
+
+            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+        } else {
+            require(
+                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, totalCost),
+                "ERC20 payment transfer failed"
+            );
+        }
 
         require(
             totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id],
             ""
         );
 
-        if (isTokenExist[id] == true) {
+        if (isTokenExist[id]) {
             _mintTokens(_msgSender(), id, amount, "");
         } else {
             require(mintedTokenId.length < maxSupply(), "");
@@ -319,6 +360,8 @@ contract MyToken is
             isTokenExist[id] = true;
             _mintTokens(_msgSender(), id, amount, "");
         }
+
+        IMiningPool(_deploymentConfig.miningPool).recordMintTx();
     }
 
     function mintWithERC20(uint256 _tokenId, uint256 _amount, uint256 _pid, bytes memory data) public nonReentrant {
@@ -335,15 +378,23 @@ contract MyToken is
         }
         totalCost *= _amount;
 
-        uint256 fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
-        uint256 remainingAmount = totalCost - fee;
+        uint256 fee = 0;
 
-        require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.feeDistributionAddress, fee), "Payment fee transfer failed");
-        require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.treasuryAddress, remainingAmount), "Payment transfer failed");
+        if (totalCost >= _deploymentConfig.minimumMintPrice) {
+            fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
+            uint256 remainingAmount = totalCost - fee;
 
-        IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.feeDistributionAddress, fee), "Payment fee transfer failed");
+            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.treasuryAddress, remainingAmount), "Payment transfer failed");
+
+            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
+        } else {
+            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.treasuryAddress, totalCost), "Payment transfer failed");
+        }
 
         _mint(msg.sender, _tokenId, _amount, data);
+
+        IMiningPool(_deploymentConfig.miningPool).recordMintTx();
     }
 
     function availableToken(uint256 id) public view returns (uint256) {
@@ -404,40 +455,101 @@ contract MyToken is
     }
 
     function burn(uint256 id, uint256 amount) public {
-        require(
-            _deploymentConfig.isSoulBound == true,
-            ""
-        );
-        require(
-            balanceOf(_msgSender(), id) >= amount,
-            ""
-        );
+        require(_deploymentConfig.isSoulBound == true, "");
+        require(balanceOf(_msgSender(), id) >= amount, "");
+
+        uint256 burnValue = getBurnValue(id, amount);
         _burn(_msgSender(), id, amount);
-    }
 
+        if (burnValue < _deploymentConfig.minimumMintPrice) {
+            require(
+                _deploymentConfig.payToken.transferFrom(
+                    msg.sender,
+                    _deploymentConfig.feeDistributionAddress,
+                    _deploymentConfig.burnPrice
+                ),
+                "USDT transfer failed"
+            );
+            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(
+                _deploymentConfig.payToken,
+                _deploymentConfig.burnPrice
+            );
+            IMiningPool(_deploymentConfig.miningPool).recordRevokeTx();
+            }
+    }
     function revoke(address from, uint256 id, uint256 amount) public onlyOwner {
-        require(
-            _deploymentConfig.isSoulBound == true,
-            ""
-        );
+        require(_deploymentConfig.isSoulBound == true, "");
 
+        uint256 burnValue = getBurnValue(id, amount);
         _burn(from, id, amount);
+
+        if (burnValue < _deploymentConfig.minimumMintPrice) {
+            require(
+                _deploymentConfig.payToken.transferFrom(
+                    from,
+                    _deploymentConfig.feeDistributionAddress,
+                    _deploymentConfig.burnPrice
+                ),
+                "USDT transfer failed"
+            );
+            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(
+                _deploymentConfig.payToken,
+                _deploymentConfig.burnPrice
+            );
+            IMiningPool(_deploymentConfig.miningPool).recordRevokeTx();
+        }
     }
+
 
     function revoke_by_owner(
-        address[] memory _wAddress,
-        uint256[] memory _tokenId,
-        uint256[] memory _amount
+    address[] memory _wAddress,
+    uint256[] memory _tokenId,
+    uint256[] memory _amount
     ) public onlyOwner {
         require(
             _wAddress.length == _tokenId.length &&
-                _wAddress.length == _amount.length,
+            _wAddress.length == _amount.length,
             ""
         );
 
         for (uint256 i = 0; i < _wAddress.length; i++) {
+            uint256 burnValue = getBurnValue(_tokenId[i], _amount[i]);
             revoke(_wAddress[i], _tokenId[i], _amount[i]);
+            if (burnValue < _deploymentConfig.minimumMintPrice) {
+                require(
+                    _deploymentConfig.payToken.transferFrom(
+                        _wAddress[i],
+                        _deploymentConfig.feeDistributionAddress,
+                        _deploymentConfig.burnPrice
+                    ),
+                    "USDT transfer failed"
+                );
+                IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(
+                    _deploymentConfig.payToken,
+                    _deploymentConfig.burnPrice
+                );
+                IMiningPool(_deploymentConfig.miningPool).recordRevokeTx();
+            }
         }
+    }
+
+    
+
+    function getBurnValue(uint256 id, uint256 amount) internal view returns (uint256) {
+        TokenInfo memory tokenInfo = allowedTokens[id];
+        uint256 totalCost;
+
+        if (tokenInfo.useOracle) {
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(tokenInfo.priceFeedAddress);
+            (, int256 latestPrice, , , ) = priceFeed.latestRoundData();
+            require(latestPrice > 0, "Invalid price data");
+            uint256 decimals = priceFeed.decimals();
+            totalCost = (tokenInfo.staticCost * 10 ** decimals) / uint256(latestPrice);
+        } else {
+            totalCost = tokenInfo.staticCost;
+        }
+        
+        return totalCost * amount;
     }
 
     function mintingActive() public view returns (bool) {
@@ -513,7 +625,7 @@ contract MyToken is
                 ""
             );
 
-            if (isTokenExist[id] == true) {
+            if (isTokenExist[id]) {
                 _mintTokens(_wAddress[i], id, amount, "");
             } else {
                 require(
@@ -543,7 +655,7 @@ contract MyToken is
                 totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id],
                 ""
             );
-            if (isTokenExist[id] == true) {
+            if (isTokenExist[id]) {
                 _mint(sender, id, amount, "");
             } else {
                 require(
