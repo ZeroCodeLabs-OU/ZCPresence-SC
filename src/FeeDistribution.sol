@@ -53,20 +53,5 @@ contract FeeDistribution is Ownable, IFeeDistribution {
         return recipientAmount;
     }
 
-    function updateMiningPool(address _miningPool, uint256 miningPoolPercentage) external onlyOwner {
-        require(_miningPool != address(0), "Invalid mining pool address");
-        miningPoolRecipient = Recipient({ wallet: _miningPool, percentage: miningPoolPercentage });
-        validateTotalPercentage();
-    }
 
-    function updateTreasury(address _treasury, uint256 treasuryPercentage) external onlyOwner {
-        require(_treasury != address(0), "Invalid treasury address");
-        treasuryRecipient = Recipient({ wallet: _treasury, percentage: treasuryPercentage });
-        validateTotalPercentage();
-    }
-
-    function validateTotalPercentage() internal view {
-        uint256 totalPercentage = miningPoolRecipient.percentage + treasuryRecipient.percentage;
-        require(totalPercentage == 10000, "Total percentage must be 10000 basis points");
-    }
 }

@@ -38,7 +38,7 @@ contract MiningPool {
         uint256 minedPRS = MAX_PRS_SUPPLY / (difficultyIndex * totalNFTTransactions);
         totalMinedPRS += minedPRS;
 
-        require(totalMinedPRS <= MAX_PRS_SUPPLY, "Exceeds maximum PRS supply");
+        require(totalMinedPRS <= MAX_PRS_SUPPLY/2, "Exceeds maximum PRS supply");
 
         tokenPrices[totalNFTTransactions] = prsFract / minedPRS;
         emit MiningDetailsUpdated(minedPRS, totalNFTTransactions);
