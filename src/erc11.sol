@@ -14,12 +14,7 @@ import "./ReentrancyGuard.sol";
 import "./IERC20.sol";
 import "./IFeeDistribution.sol";
 import "../lib/chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-
-interface IMiningPool {
-    function recordMintTx() external;
-    function recordRevokeTx() external;
-}
-
+import "./IMiningPool.sol";
 contract MyToken is
     ERC1155,
     ERC2981,
@@ -57,10 +52,7 @@ contract MyToken is
         uint256 tokensPerMint;
         uint256 tokenPerPerson;
         address treasuryAddress;
-        address WhitelistSigner;
-        bool isSoulBound;
         bool openedition;
-        address trustedForwarder;
         IERC20 payToken;
         bool useOracle;
         address priceFeedAddress;
@@ -77,12 +69,8 @@ contract MyToken is
         bool metadataUpdatable;
         uint256 publicMintPrice;
         bool publicMintPriceFrozen;
-        uint256 presaleMintPrice;
-        bool presaleMintPriceFrozen;
         uint256 publicMintStart;
-        uint256 presaleMintStart;
         string prerevealTokenURI;
-        bytes32 presaleMerkleRoot;
         uint256 royaltiesBps;
         address royaltiesAddress;
     }
@@ -132,7 +120,6 @@ contract MyToken is
 
         _deploymentConfig = deploymentConfig;
         _runtimeConfig = runtimeConfig;
-        _setTrustedForwarder(deploymentConfig.trustedForwarder);
 
         // Add the first token to allowedTokens
         allowedTokens.push(TokenInfo({
@@ -275,187 +262,14 @@ contract MyToken is
         IMiningPool(_deploymentConfig.miningPool).recordMintTx();
     }
 
-    function presaleMint(
-        uint256 amount,
-        bytes memory signature,
-        uint256 id,
-        uint256 tokenIndex,
-        uint256 deadline
-    )
-        external
-        nonReentrant
-    {
-        require(presaleActive(), "");
-
-        bytes32 messageHash = keccak256(
-            abi.encodePacked(
-                _msgSender(),
-                id,
-                amount,
-                address(this),
-                nonces[_msgSender()]++,
-                block.chainid,
-                deadline
-            )
-        );
-
-        require(deadline >= block.timestamp, "");
-        bytes32 ethSignedMessageHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash)
-        );
-        address signer = ECDSA.recover(ethSignedMessageHash, signature);
-
-        require(
-            signer == _deploymentConfig.WhitelistSigner,
-            ""
-        );
-        require(
-            _presaleMinted[_msgSender()] == false,
-            ""
-        );
-        require(
-            !signatureUsed[messageHash],
-            ""
-        );
-
-        signatureUsed[messageHash] = true;
-        _presaleMinted[_msgSender()] = true;
-
-        TokenInfo memory tokenInfo = allowedTokens[tokenIndex];
-        uint256 totalCost = tokenInfo.staticCost * amount;
-        uint256 fee = 0;
-
-        if (totalCost >= _deploymentConfig.minimumMintPrice) {
-            fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
-            uint256 remainingAmount = totalCost - fee;
-
-            require(
-                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.feeDistributionAddress, fee),
-                "ERC20 fee transfer failed"
-            );
-
-            require(
-                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, remainingAmount),
-                "ERC20 payment transfer failed"
-            );
-
-            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
-        } else {
-            require(
-                tokenInfo.payToken.transferFrom(_msgSender(), _deploymentConfig.treasuryAddress, totalCost),
-                "ERC20 payment transfer failed"
-            );
-        }
-
-        require(
-            totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id],
-            ""
-        );
-
-        if (isTokenExist[id]) {
-            _mintTokens(_msgSender(), id, amount, "");
-        } else {
-            require(mintedTokenId.length < maxSupply(), "");
-            mintedTokenId.push(id);
-            isTokenExist[id] = true;
-            _mintTokens(_msgSender(), id, amount, "");
-        }
-
-        IMiningPool(_deploymentConfig.miningPool).recordMintTx();
-    }
-
-    function mintWithERC20(uint256 _tokenId, uint256 _amount, uint256 _pid, bytes memory data) public nonReentrant {
-        TokenInfo memory tokenInfo = allowedTokens[_pid];
-        uint256 totalCost;
-        if (tokenInfo.useOracle) {
-            AggregatorV3Interface priceFeed = AggregatorV3Interface(tokenInfo.priceFeedAddress);
-            (, int256 latestPrice, , , ) = priceFeed.latestRoundData();
-            require(latestPrice > 0, "Invalid price data");
-            uint256 decimals = priceFeed.decimals();
-            totalCost = (tokenInfo.staticCost * 10 ** decimals) / uint256(latestPrice);
-        } else {
-            totalCost = tokenInfo.staticCost;
-        }
-        totalCost *= _amount;
-
-        uint256 fee = 0;
-
-        if (totalCost >= _deploymentConfig.minimumMintPrice) {
-            fee = (totalCost * _deploymentConfig.feePercentage) / 10000;
-            uint256 remainingAmount = totalCost - fee;
-
-            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.feeDistributionAddress, fee), "Payment fee transfer failed");
-            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.treasuryAddress, remainingAmount), "Payment transfer failed");
-
-            IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(tokenInfo.payToken, fee);
-        } else {
-            require(tokenInfo.payToken.transferFrom(msg.sender, _deploymentConfig.treasuryAddress, totalCost), "Payment transfer failed");
-        }
-
-        _mint(msg.sender, _tokenId, _amount, data);
-
-        IMiningPool(_deploymentConfig.miningPool).recordMintTx();
-    }
-
+    
     function availableToken(uint256 id) public view returns (uint256) {
         return _deploymentConfig.tokenQuantity[id] - totalSupply(id);
     }
 
-    function makeSoulBound() public onlyOwner {
-        _deploymentConfig.isSoulBound = true;
-    }
-
-    function disableSoulBound() public onlyOwner {
-        _deploymentConfig.isSoulBound = false;
-    }
-
-    function getSoulBoundStatus() public view returns (bool) {
-        return _deploymentConfig.isSoulBound;
-    }
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public override {
-        require(
-            _deploymentConfig.isSoulBound == false,
-            ""
-        );
-
-        super.safeTransferFrom(from, to, id, amount, data);
-    }
-
-    function _safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) internal virtual override {
-        require(
-            _deploymentConfig.isSoulBound == false,
-            ""
-        );
-
-        super._safeBatchTransferFrom(from, to, ids, amounts, data);
-    }
-
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    ) public virtual override {
-        require(
-            _deploymentConfig.isSoulBound == false,
-            ""
-        );
-        super.setApprovalForAll(operator, approved);
-    }
-
+    
+    
     function burn(uint256 id, uint256 amount) public {
-        require(_deploymentConfig.isSoulBound == true, "");
         require(balanceOf(_msgSender(), id) >= amount, "");
 
         uint256 burnValue = getBurnValue(id, amount);
@@ -478,7 +292,6 @@ contract MyToken is
             }
     }
     function revoke(address from, uint256 id, uint256 amount) public onlyOwner {
-        require(_deploymentConfig.isSoulBound == true, "");
 
         uint256 burnValue = getBurnValue(id, amount);
         _burn(from, id, amount);
@@ -501,38 +314,7 @@ contract MyToken is
     }
 
 
-    function revoke_by_owner(
-    address[] memory _wAddress,
-    uint256[] memory _tokenId,
-    uint256[] memory _amount
-    ) public onlyOwner {
-        require(
-            _wAddress.length == _tokenId.length &&
-            _wAddress.length == _amount.length,
-            ""
-        );
-
-        for (uint256 i = 0; i < _wAddress.length; i++) {
-            uint256 burnValue = getBurnValue(_tokenId[i], _amount[i]);
-            revoke(_wAddress[i], _tokenId[i], _amount[i]);
-            if (burnValue < _deploymentConfig.minimumMintPrice) {
-                require(
-                    _deploymentConfig.payToken.transferFrom(
-                        _wAddress[i],
-                        _deploymentConfig.feeDistributionAddress,
-                        _deploymentConfig.burnPrice
-                    ),
-                    "USDT transfer failed"
-                );
-                IFeeDistribution(_deploymentConfig.feeDistributionAddress).distributeERC20Fees(
-                    _deploymentConfig.payToken,
-                    _deploymentConfig.burnPrice
-                );
-                IMiningPool(_deploymentConfig.miningPool).recordRevokeTx();
-            }
-        }
-    }
-
+    
     
 
     function getBurnValue(uint256 id, uint256 amount) internal view returns (uint256) {
@@ -556,9 +338,7 @@ contract MyToken is
         return block.timestamp > _runtimeConfig.publicMintStart;
     }
 
-    function presaleActive() public view returns (bool) {
-        return block.timestamp > _runtimeConfig.presaleMintStart;
-    }
+    
 
     function transferOwnership(
         address newOwner
@@ -602,7 +382,6 @@ contract MyToken is
     RuntimeConfig internal _runtimeConfig;
     DeploymentConfig internal _deploymentConfig;
 
-    mapping(address => bool) internal _presaleMinted;
 
     function _mintTokens(
         address to,
@@ -614,31 +393,7 @@ contract MyToken is
         _mint(to, id, amount, data);
     }
 
-    function airdropNFTs(
-        address[] memory _wAddress,
-        uint256 id,
-        uint256 amount
-    ) public virtual onlyRole(ADMIN_ROLE) nonReentrant {
-        for (uint256 i = 0; i < _wAddress.length; i++) {
-            require(
-                totalSupply(id) + amount <= _deploymentConfig.tokenQuantity[id],
-                ""
-            );
-
-            if (isTokenExist[id]) {
-                _mintTokens(_wAddress[i], id, amount, "");
-            } else {
-                require(
-                    mintedTokenId.length < maxSupply(),
-                    ""
-                );
-                mintedTokenId.push(id);
-                isTokenExist[id] = true;
-                _mintTokens(_wAddress[i], id, amount, "");
-            }
-        }
-    }
-
+    
     function _reserveMint(
         ReservedMint memory reserveDetails,
         address sender
@@ -689,7 +444,6 @@ contract MyToken is
         require(config.royaltiesBps <= ROYALTIES_BASIS, "");
 
         _validatePublicMintPrice(config);
-        _validatePresaleMintPrice(config);
 
         _validateMetadata(config);
     }
@@ -710,21 +464,7 @@ contract MyToken is
         );
     }
 
-    function _validatePresaleMintPrice(
-        RuntimeConfig calldata config
-    ) internal view {
-        if (!_runtimeConfig.presaleMintPriceFrozen) return;
-
-        require(
-            _runtimeConfig.presaleMintPrice == config.presaleMintPrice,
-            ""
-        );
-
-        require(
-            config.presaleMintPriceFrozen,
-            ""
-        );
-    }
+    
 
     function _validateMetadata(RuntimeConfig calldata config) internal view {
         if (_runtimeConfig.metadataUpdatable) return;
@@ -841,10 +581,6 @@ contract MyToken is
         return _runtimeConfig.publicMintPrice;
     }
 
-    function presaleMintPrice() internal view returns (uint256) {
-        return _runtimeConfig.presaleMintPrice;
-    }
-
     function tokensPerMint() internal view returns (uint256) {
         return _deploymentConfig.tokensPerMint;
     }
@@ -859,14 +595,6 @@ contract MyToken is
 
     function publicMintStart() external view returns (uint256) {
         return _runtimeConfig.publicMintStart;
-    }
-
-    function presaleMintStart() external view returns (uint256) {
-        return _runtimeConfig.presaleMintStart;
-    }
-
-    function presaleMerkleRoot() external view returns (bytes32) {
-        return _runtimeConfig.presaleMerkleRoot;
     }
 
     function baseURI() external view returns (string memory) {
