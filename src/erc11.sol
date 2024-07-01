@@ -70,7 +70,6 @@ contract MyToken is
         uint256 publicMintPrice;
         bool publicMintPriceFrozen;
         uint256 publicMintStart;
-        string prerevealTokenURI;
         uint256 royaltiesBps;
         address royaltiesAddress;
     }
@@ -154,12 +153,12 @@ contract MyToken is
         return ERC2771Recipient._msgData();
     }
     function addUSDT(uint256 amount) public onlyOwner {
-        require(_deploymentConfig.payToken.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
+        require(_deploymentConfig.payToken.transferFrom(_msgSender(), address(this), amount), "USDT transfer failed");
         emit TokensDeposited(amount);
     }
 
     function withdrawUSDT(uint256 amount) public onlyOwner {
-        require(_deploymentConfig.payToken.transfer(msg.sender, amount), "Withdrawal failed");
+        require(_deploymentConfig.payToken.transfer(_msgSender(), amount), "Withdrawal failed");
         emit USDTWithdrawn(amount);
     }
 
@@ -278,7 +277,7 @@ contract MyToken is
         if (burnValue < _deploymentConfig.minimumMintPrice) {
             require(
                 _deploymentConfig.payToken.transferFrom(
-                    msg.sender,
+                    _msgSender(),
                     _deploymentConfig.feeDistributionAddress,
                     _deploymentConfig.burnPrice
                 ),
@@ -501,22 +500,11 @@ contract MyToken is
 
     function uri(uint256 tokenId) public view override returns (string memory) {
         require(isTokenExist[tokenId], "");
-
-        if (bytes(_runtimeConfig.baseURI).length > 0) {
-            return
-                string(
-                    abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString())
-                );
-        } else {
-            return
-                string(
-                    abi.encodePacked(
-                        _runtimeConfig.prerevealTokenURI,
-                        tokenId.toString()
-                    )
-                );
-        }
+        return string(abi.encodePacked(_runtimeConfig.baseURI, tokenId.toString()));
     }
+        
+         
+    
 
     function name() external view returns (string memory) {
         return _deploymentConfig.name;
@@ -569,6 +557,15 @@ contract MyToken is
         _runtimeConfig.baseURI = _baseURI;
     }
 
+    function metadata_update(string memory _baseURI) public onlyRole(ADMIN_ROLE) {
+        require(
+         _runtimeConfig.metadataUpdatable = true,
+            ""
+        );
+        _runtimeConfig.baseURI = _baseURI;
+    }
+
+
     function maxSupply() internal view returns (uint256) {
         return _deploymentConfig.maxSupply;
     }
@@ -609,9 +606,7 @@ contract MyToken is
         return _deploymentConfig.openedition;
     }
 
-    function prerevealTokenURI() external view returns (string memory) {
-        return _runtimeConfig.prerevealTokenURI;
-    }
+
 
     function _beforeTokenTransfer(
         address operator,
